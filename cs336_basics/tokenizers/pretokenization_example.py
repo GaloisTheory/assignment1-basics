@@ -1,6 +1,7 @@
 import os
 from typing import BinaryIO
 
+from cs336_basics.tokenizers.config import DATA_PATH_VALID
 
 def find_chunk_boundaries(
     file: BinaryIO,
@@ -50,7 +51,7 @@ def find_chunk_boundaries(
 
 
 ## Usage
-with open(..., "rb") as f:
+with open(DATA_PATH_VALID, "rb") as f:
     num_processes = 4
     boundaries = find_chunk_boundaries(f, num_processes, b"<|endoftext|>")
 
