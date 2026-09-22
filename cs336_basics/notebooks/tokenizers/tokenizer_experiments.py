@@ -1,12 +1,14 @@
 # %%
+import math
 import random
+import time
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 
 from cs336_basics.tokenizers.tokenizer import Tokenizer
 
-ROOT = next(
-    p for p in [Path.cwd(), *Path.cwd().parents] if (p / "artifacts/tokenizers").is_dir()
-)
+ROOT = next(p for p in [Path.cwd(), *Path.cwd().parents] if (p / "artifacts/tokenizers").is_dir())
 ARTIFACTS = ROOT / "artifacts/tokenizers"
 DATA = ROOT / "data"
 SPECIAL = "<|endoftext|>"
@@ -24,6 +26,7 @@ owt_tokenizer = Tokenizer.from_files(
 
 print(f"TinyStories vocab: {len(tinystories_tokenizer.vocab):,}")
 print(f"OpenWebText vocab: {len(owt_tokenizer.vocab):,}")
+
 
 # %%
 def sample_documents(path, n=100, seed=0):
@@ -90,6 +93,7 @@ print()
 print("TinyStories preview:", ts_docs[0][:120].replace("\n", " "))
 print("OpenWebText preview:", owt_docs[0][:120].replace("\n", " "))
 
+
 # %%
 def compression_ratio(tokenizer, documents):
     """Pooled bytes/token over the sampled documents.
@@ -120,11 +124,6 @@ print(f"OpenWebText:  {owt_ratio_sw:.3f} bytes/token  ({owt_bytes_sw:,} bytes / 
 
 
 # %%
-import math
-import time
-
-import matplotlib.pyplot as plt
-
 # First N documents, in file order. The clock below covers encode only.
 SIZES = [1, 10, 100, 1_000, 10_000, 100_000]
 

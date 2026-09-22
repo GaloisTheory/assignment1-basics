@@ -1,14 +1,10 @@
 import os
-import regex as re 
+import regex as re
 
 from collections import Counter
 from collections.abc import Iterator
 
 from typing import BinaryIO
-
-from torch import special
-
-from cs336_basics.tokenizers.config import DATA_PATH_VALID
 
 
 def find_chunk_boundaries(
@@ -58,23 +54,20 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
-def iter_pretokens(
-    chunks: list[str], 
-    include_special_tokens: bool = False
-) -> Iterator[tuple[bytes, ...]]: 
-    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""        
+def iter_pretokens(chunks: list[str], include_special_tokens: bool = False) -> Iterator[tuple[bytes, ...]]:
+    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
-    for i, chunk in enumerate(chunks): 
-        if include_special_tokens and i % 2 == 1: 
+    for i, chunk in enumerate(chunks):
+        if include_special_tokens and i % 2 == 1:
             special_token = chunk.encode("utf-8")
             yield (special_token,)
-        else: 
-            for match in re.finditer(PAT, chunk): 
+        else:
+            for match in re.finditer(PAT, chunk):
                 piece = match.group().encode("utf-8")
-                yield tuple(piece[i:i+1] for i in range(len(piece)))  # pause, hand this tuple out
-        
+                yield tuple(piece[i : i + 1] for i in range(len(piece)))  # pause, hand this tuple out
+
 
 def process_chunks_pretokenization(
-    chunks: list[str], 
-) -> dict[tuple[bytes, ...], int]: 
+    chunks: list[str],
+) -> dict[tuple[bytes, ...], int]:
     return Counter(iter_pretokens(chunks))
