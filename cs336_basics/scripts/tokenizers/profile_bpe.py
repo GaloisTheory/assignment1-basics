@@ -20,8 +20,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, help="Defaults to DATA_PATH_VALID")
     parser.add_argument("--vocab-size", type=int, default=10_000)
-    parser.add_argument("--repeats", type=int, default=1,
-                        help="Unprofiled runs per configuration (default: 1)")
+    parser.add_argument("--repeats", type=int, default=1, help="Unprofiled runs per configuration (default: 1)")
     parser.add_argument("--top", type=int, default=20)
     parser.add_argument("--output", type=Path, default=Path("profiles"))
     parser.add_argument("--timing-only", action="store_true")
@@ -45,18 +44,22 @@ def main():
         # train_bpe's num_processes=1 normally selects serial pre-tokenization.
         # Temporarily route that call to the existing chunked implementation
         # to measure a real one-worker pool as well. No trainer source changes.
-        pretokenizer = serial_pretokenize if workers is None else partial(
-            tokenization.pretokenize_chunked, num_processes=workers
+        pretokenizer = (
+            serial_pretokenize if workers is None else partial(tokenization.pretokenize_chunked, num_processes=workers)
         )
         with patch.object(tokenization, "pretokenize", pretokenizer):
             return tokenization.train_bpe(
-                input_path=str(input_path), vocab_size=args.vocab_size,
-                special_tokens=["<|endoftext|>"], num_processes=1,
+                input_path=str(input_path),
+                vocab_size=args.vocab_size,
+                special_tokens=["<|endoftext|>"],
+                num_processes=1,
             )
 
     report = {
-        "input": str(input_path), "vocab_size": args.vocab_size,
-        "repeats": args.repeats, "profile_scope": "parent process only",
+        "input": str(input_path),
+        "vocab_size": args.vocab_size,
+        "repeats": args.repeats,
+        "profile_scope": "parent process only",
         "runs": [],
     }
     reference = None
@@ -75,8 +78,7 @@ def main():
                 raise RuntimeError(f"{label}: vocabulary or ordered merges differ from serial")
             times.append(elapsed)
             print(f"  {elapsed:.3f}s; matches serial", flush=True)
-        report["runs"].append({"configuration": label, "seconds": times,
-                               "median_seconds": median(times)})
+        report["runs"].append({"configuration": label, "seconds": times, "median_seconds": median(times)})
 
     baseline = report["runs"][0]["median_seconds"]
     print("\nUnprofiled elapsed time (median)")
@@ -96,9 +98,7 @@ def main():
                 raise RuntimeError(f"{label}: profiled result differs from serial")
             profiler.dump_stats(str(output / f"{label}.prof"))
             with (output / f"{label}.txt").open("w") as stream:
-                pstats.Stats(profiler, stream=stream).strip_dirs().sort_stats(
-                    "cumulative"
-                ).print_stats(args.top)
+                pstats.Stats(profiler, stream=stream).strip_dirs().sort_stats("cumulative").print_stats(args.top)
             pstats.Stats(profiler).strip_dirs().sort_stats("cumulative").print_stats(args.top)
     print(f"\nSaved results to {output.resolve()}")
 
