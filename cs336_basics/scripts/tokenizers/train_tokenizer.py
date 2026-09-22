@@ -35,27 +35,25 @@ def main():
     if args.run_profiling: 
         profiler = cProfile.Profile()
 
-        vocab, merges = profiler.runcall(
+        vocab, merge_list = profiler.runcall(
             train_bpe,
             input_path=args.input,
             vocab_size=args.vocab_size,
             special_tokens=args.special_tokens, 
             num_processes=args.num_workers
         )
-    args.output_path.mkdir(parents=True, exist_ok=True)
+    output_dir = args.output_path / args.tokenizer_name
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    profiler.dump_stats(args.output_path / f"{args.tokenizer_name}_stats.prof")
-    print(f"Finished: {len(vocab):,} tokens, {len(merges):,} merges")
+    profiler.dump_stats(output_dir / "stats.prof")
+    print(f"Finished: {len(vocab):,} tokens, {len(merge_list):,} merges")
     pstats.Stats(profiler).strip_dirs().sort_stats("cumulative").print_stats(25)
 
-    tokenizer = {
-        "vocab": vocab, 
-        "merge_list": merge_list
-    }
-    with (args.output_path / f"{args.tokenizer_name}_tokenizer.pkl").open("wb") as f:
-        pickle.dump(tokenizer, f)
+    with (output_dir / "vocab.pkl").open("wb") as f:
+        pickle.dump(vocab, f)
+    with (output_dir / "merges.pkl").open("wb") as f:
+        pickle.dump(merge_list, f)
 
 
 if __name__ == "__main__":
     main()
-

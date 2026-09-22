@@ -83,7 +83,7 @@ are outside the parent's profiler.
 ## Vocabulary inspection
 
 Direct inspection of the locally generated full-training artifact
-`artifacts/tokenizers/TinyStoriesTrain_tokenizer.pkl` establishes:
+`artifacts/tokenizers/TinyStoriesTrain/tokenizer.pkl` establishes:
 
 - 10,000 vocabulary entries and 9,743 ordered merges.
 - Entry lengths from 1 to 15 bytes; mean length 5.7913 bytes.

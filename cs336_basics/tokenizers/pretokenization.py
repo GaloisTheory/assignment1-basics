@@ -1,7 +1,15 @@
 import os
+import regex as re 
+
+from collections import Counter
+from collections.abc import Iterator
+
 from typing import BinaryIO
 
+from torch import special
+
 from cs336_basics.tokenizers.config import DATA_PATH_VALID
+
 
 def find_chunk_boundaries(
     file: BinaryIO,
@@ -50,14 +58,23 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
-## Usage
-with open(DATA_PATH_VALID, "rb") as f:
-    num_processes = 4
-    boundaries = find_chunk_boundaries(f, num_processes, b"<|endoftext|>")
+def iter_pretokens(
+    chunks: list[str], 
+    include_special_tokens: bool = False
+) -> Iterator[tuple[bytes, ...]]: 
+    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""        
 
-    # The following is a serial implementation, but you can parallelize this
-    # by sending each start/end pair to a set of processes.
-    for start, end in zip(boundaries[:-1], boundaries[1:]):
-        f.seek(start)
-        chunk = f.read(end - start).decode("utf-8", errors="ignore")
-        # Run pre-tokenization on your chunk and store the counts for each pre-token
+    for i, chunk in enumerate(chunks): 
+        if include_special_tokens and i % 2 == 1: 
+            special_token = chunk.encode("utf-8")
+            yield (special_token,)
+        else: 
+            for match in re.finditer(PAT, chunk): 
+                piece = match.group().encode("utf-8")
+                yield tuple(piece[i:i+1] for i in range(len(piece)))  # pause, hand this tuple out
+        
+
+def process_chunks_pretokenization(
+    chunks: list[str], 
+) -> dict[tuple[bytes, ...], int]: 
+    return Counter(iter_pretokens(chunks))

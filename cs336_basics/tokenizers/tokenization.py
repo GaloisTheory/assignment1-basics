@@ -3,28 +3,19 @@ from collections import Counter, defaultdict
 from io import BufferedReader
 import regex as re 
 
-from cs336_basics.tokenizers.pretokenization_example import find_chunk_boundaries 
+from cs336_basics.tokenizers.pretokenization import find_chunk_boundaries, process_chunks_pretokenization 
 from cs336_basics.tokenizers.config import DATA_PATH_TOY, DATA_PATH_TRAIN, DATA_PATH_VALID
 
 
 def pretokenize(input_path: str, 
                 special_tokens: list[str], 
-                ) -> dict[tuple[bytes], int]: 
+                ) -> dict[tuple[bytes, ...], int]: 
     with open(input_path, "r", encoding="utf-8") as f:
         #Pre-Tokenization 
-        PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-        # split_text = re.findall(PAT, f.read())
         st_split_pattern = "|".join(re.escape(s) for s in special_tokens)
         chunks = re.split(st_split_pattern, f.read())
-        
-        pretokens = defaultdict(int)
-        for chunk in chunks: 
-            for match in re.finditer(PAT, chunk): 
-                piece = match.group().encode("utf-8")
-                piece_tuple = tuple(piece[i:i+1] for i in range(len(piece)))
-                pretokens[piece_tuple] += 1
 
-    return pretokens
+    return process_chunks_pretokenization(chunks)        
 
 
 def pretokenize_chunked(
@@ -56,17 +47,9 @@ def pretokenize_chunk(
     input_path, start, end, st_split_pattern = args
     with open(input_path, "rb") as f:
         f.seek(start)
-        PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
         chunks = re.split(st_split_pattern, f.read(end - start).decode("utf-8", errors="ignore"))
 
-    pretokens = defaultdict(int)
-    for chunk in chunks: 
-        for match in re.finditer(PAT, chunk): 
-            piece = match.group().encode("utf-8")
-            piece_tuple = tuple(piece[i:i+1] for i in range(len(piece)))
-            pretokens[piece_tuple] += 1
-
-    return pretokens
+    return process_chunks_pretokenization(chunks)
 
 
 def merge(
